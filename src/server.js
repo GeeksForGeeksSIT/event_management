@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import pool from './db.js';
 import adminRouter from './routes/admin.js';
+import eventRouter from './routes/events.js';
 import { globalErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.get('/', (req, res) => {
     endpoints: {
       root: '/',
       admin: '/admin/onboard',
+      events: '/events',
       health: '/health',
     },
   });
@@ -47,6 +49,7 @@ app.get('/health', async (req, res) => {
 // Routes
 // app.use('/users', usersRouter);
 app.use('/admin', adminRouter);
+app.use('/events', eventRouter);
 
 // 404 Handler
 app.use(notFoundHandler);
