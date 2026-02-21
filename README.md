@@ -16,6 +16,7 @@ A comprehensive event management platform for GeeksforGeeks clubs to manage admi
 - Track event registrations
 - Manage event venues and schedules
 
+
 👥 **User Management**
 - Student registration and authentication
 - User profiles with branch and university information

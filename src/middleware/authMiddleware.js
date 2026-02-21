@@ -71,3 +71,39 @@ export const authorizeUpdateAdmin = (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Authentication Middleware
+ * Verifies JWT token from Authorization header and extracts user data
+ * Expects: Authorization: Bearer <token>
+ */
+
+export const authenticateUser = (req,res,next)=>{
+    try{
+        const authHeader= req.header.authorization;
+
+        if(!authHeader || !authHeader.startsWith('Bearer ')){
+            throw createUnauthorizedError(
+                ERROR_CODES.UNAUTHORIZED,
+                'Missing or invalid Authorization header'
+        );
+        }
+
+        const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+        const decoded = verifyJWT(token);
+
+        req.user={
+            userId: decoded.userId,
+            userName: decoded.name,
+            userEmail: decode.email
+        }
+        next();
+    }
+    catch{
+        if (error.statusCode) {
+        next(error);
+        } else {
+            next(createUnauthorizedError(ERROR_CODES.UNAUTHORIZED, 'Invalid or expired token'));
+        }
+    }
+} 
