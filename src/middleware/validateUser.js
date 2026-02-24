@@ -42,7 +42,7 @@ export const sanitizeUserInput = (req, res, next) => {
  */
 export const validateUserRegistrationInput = (req, res, next) => {
   try {
-    const { studentID, fullName, username, email, password, phone, branchID, graduationYear } = req.body;
+    const { studentID, fullName, username, email, password, phone, branchID, graduationYear, uniID } = req.body;
 
     const validated = {};
 
@@ -67,13 +67,14 @@ export const validateUserRegistrationInput = (req, res, next) => {
     // Validate GraduationYear
     validated.graduationYear = validateGraduationYear(graduationYear);
 
-    // Validate BranchID (optional)
-    if (branchID !== undefined && branchID !== null) {
-      validated.branchID = validatePositiveInteger(branchID, 'BranchID');
-    }
+    // Validate UniID (mandatory)
+    validated.uniID = validatePositiveInteger(uniID, 'UniID');
 
-    // Attach validated data to request
-    req.validated = validated;
+    // Validate BranchID (mandatory)
+    validated.branchID = validatePositiveInteger(branchID, 'BranchID');
+
+    // Merge validated data with existing request data
+    req.validated = { ...(req.validated || {}), ...validated };
     next();
   } catch (error) {
     if (error.statusCode) {
@@ -105,7 +106,7 @@ export const validateUserLoginInput = (req, res, next) => {
     }
     validated.password = password;
 
-    req.validated = validated;
+    req.validated = { ...(req.validated || {}), ...validated };
     next();
   } catch (error) {
     if (error.statusCode) {
@@ -153,7 +154,7 @@ export const validateUserUpdateInput = (req, res, next) => {
       validated.oldPassword = oldPassword;
     }
 
-    req.validated = validated;
+    req.validated = { ...(req.validated || {}), ...validated };
     next();
   } catch (error) {
     if (error.statusCode) {

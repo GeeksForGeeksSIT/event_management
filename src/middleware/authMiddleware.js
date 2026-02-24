@@ -26,15 +26,29 @@ export const authenticateToken = (req, res, next) => {
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
     const decoded = verifyJWT(token);
 
+    // Extract ID and force numeric type to prevent "7" !== 7 issues
+    const rawID = decoded.userID || decoded.UserID || decoded.adminID || decoded.AdminID;
+    let extractedID = rawID !== undefined ? parseInt(rawID, 10) : undefined;
+
+    // Fallback: Try to parse ID from standard 'sub' claim (e.g., "user-7" -> 7)
+    if (isNaN(extractedID) || extractedID === undefined) {
+      if (decoded.sub) {
+        const match = decoded.sub.match(/\d+$/);
+        if (match) {
+          extractedID = parseInt(match[0], 10);
+        }
+      }
+    }
+
     // Attach decoded data to request object
-    // Handle both user and admin token structures
     req.auth = {
-      userID: decoded.UserID || decoded.userID,
-      sub: decoded.UserID || decoded.userID || decoded.adminID || decoded.AdminID,
-      email: decoded.Email || decoded.email,
-      roleID: decoded.RoleID || decoded.roleID || 2, // Default to user role (2) if not specified
-      fullName: decoded.FullName || decoded.fullName,
-      studentID: decoded.StudentID || decoded.studentID,
+      userID: decoded.userID || decoded.UserID ? parseInt(decoded.userID || decoded.UserID, 10) : undefined,
+      adminID: decoded.adminID || decoded.AdminID ? parseInt(decoded.adminID || decoded.AdminID, 10) : undefined,
+      sub: extractedID,
+      email: decoded.email || decoded.Email,
+      roleID: parseInt(decoded.roleID || decoded.RoleID || 2, 10),
+      fullName: decoded.fullName || decoded.FullName,
+      studentID: decoded.studentID || decoded.StudentID,
     };
 
     next();

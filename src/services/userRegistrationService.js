@@ -62,6 +62,29 @@ export const checkUsernameExists = async (username) => {
 };
 
 /**
+ * Validate university exists
+ */
+export const validateUniversityExists = async (uniID) => {
+  const query = `
+    SELECT "UniID" FROM "University" WHERE "UniID" = $1
+  `;
+
+  try {
+    const result = await pool.query(query, [uniID]);
+    if (result.rows.length === 0) {
+      throw createValidationError(
+        ERROR_CODES.INVALID_INPUT,
+        'Invalid University ID'
+      );
+    }
+    return true;
+  } catch (error) {
+    if (error.statusCode) throw error;
+    throw createServerError(ERROR_CODES.DATABASE_ERROR, 'Error validating university');
+  }
+};
+
+/**
  * Validate branch exists
  */
 export const validateBranchExists = async (branchID) => {
@@ -138,10 +161,11 @@ export const registerUser = async (validatedData) => {
     );
   }
 
-  // Validate branch if provided
-  if (validatedData.branchID) {
-    await validateBranchExists(validatedData.branchID);
-  }
+  // Validate branch (mandatory)
+  await validateBranchExists(validatedData.branchID);
+
+  // Validate university (mandatory)
+  await validateUniversityExists(validatedData.uniID);
 
   // Hash password
   const passwordHash = await hashPassword(validatedData.password);
@@ -160,11 +184,12 @@ export const registerUser = async (validatedData) => {
         "Email",
         "PasswordHash",
         "Phone",
+        "UniID",
         "BranchID",
         "GraduationYear",
         "IsActive",
         "CreatedAt"
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
       RETURNING 
         "UserID",
         "StudentID",
@@ -172,6 +197,7 @@ export const registerUser = async (validatedData) => {
         "Username",
         "Email",
         "Phone",
+        "UniID",
         "BranchID",
         "GraduationYear",
         "IsActive",
@@ -185,7 +211,8 @@ export const registerUser = async (validatedData) => {
       validatedData.email,
       passwordHash,
       validatedData.phone,
-      validatedData.branchID || null,
+      validatedData.uniID,
+      validatedData.branchID,
       validatedData.graduationYear,
       true, // IsActive defaults to true
     ]);
@@ -319,9 +346,6 @@ export const loginUser = async (email, password) => {
  * Update user profile
  */
 export const updateUserProfile = async (userID, updateData) => {
-  // Get current user
-  const user = await getUserById(userID);
-
   // Build dynamic update query
   const updates = [];
   const values = [];
@@ -340,8 +364,18 @@ export const updateUserProfile = async (userID, updateData) => {
   }
 
   if (updateData.password) {
+    // Fetch user's current password hash for verification
+    const userQuery = 'SELECT "PasswordHash" FROM "User" WHERE "UserID" = $1';
+    const userResult = await pool.query(userQuery, [userID]);
+
+    if (userResult.rows.length === 0) {
+      throw createNotFoundError(ERROR_CODES.USER_NOT_FOUND, 'User not found');
+    }
+
+    const currentPasswordHash = userResult.rows[0].PasswordHash;
+
     // Verify old password first
-    const isPasswordValid = await verifyPassword(updateData.oldPassword, user.PasswordHash);
+    const isPasswordValid = await verifyPassword(updateData.oldPassword, currentPasswordHash);
     if (!isPasswordValid) {
       throw createUnauthorizedError(
         ERROR_CODES.UNAUTHORIZED,
@@ -363,14 +397,17 @@ export const updateUserProfile = async (userID, updateData) => {
     );
   }
 
-  // Add UpdatedAt timestamp and UserID
+  // Add UpdatedAt timestamp
   updates.push(`"UpdatedAt" = NOW()`);
+
+  // Add UserID as the last parameter for the WHERE clause
   values.push(userID);
+  const whereParamIndex = paramCount;
 
   const query = `
     UPDATE "User"
     SET ${updates.join(', ')}
-    WHERE "UserID" = $${paramCount}
+    WHERE "UserID" = $${whereParamIndex}
     RETURNING 
       "UserID",
       "StudentID",

@@ -7,11 +7,11 @@ import { createServerError } from './errors.js';
 import { ERROR_CODES } from '../constants/errorCodes.js';
 
 /**
- * Generate JWT token for admin after successful onboarding
- * @param {Object} adminData - Admin data from database
+ * Generate JWT token for authenticated users and admins
+ * @param {Object} data - User or Admin data from database
  * @returns {string} JWT token
  */
-export const generateJWT = (adminData) => {
+export const generateJWT = (data) => {
   const JWT_SECRET = process.env.JWT_SECRET;
   const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h'; // Default 24 hours
 
@@ -22,22 +22,29 @@ export const generateJWT = (adminData) => {
     );
   }
 
+  // Extract IDs (handle both camelCase and PascalCase)
+  const adminID = data.AdminID || data.adminID;
+  const userID = data.UserID || data.userID;
+  const id = adminID || userID;
+  const prefix = adminID ? 'admin' : 'user';
+
   try {
     const token = jwt.sign(
       {
         // Payload
-        adminID: adminData.AdminID,
-        studentID: adminData.StudentID,
-        email: adminData.Email,
-        roleID: adminData.RoleID,
-        fullName: adminData.FullName,
+        adminID: adminID,
+        userID: userID,
+        studentID: data.StudentID || data.studentID,
+        email: data.Email || data.email,
+        roleID: data.RoleID || data.roleID,
+        fullName: data.FullName || data.fullName,
       },
       JWT_SECRET,
       {
         expiresIn: JWT_EXPIRY,
         issuer: 'gfg-event-management',
-        audience: 'admin-api',
-        subject: `admin-${adminData.AdminID}`,
+        audience: adminID ? 'admin-api' : 'user-api',
+        subject: `${prefix}-${id}`,
       }
     );
 
@@ -65,7 +72,7 @@ export const verifyJWT = (token) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET, {
       issuer: 'gfg-event-management',
-      audience: 'admin-api',
+      audience: ['admin-api', 'user-api'],
     });
     return decoded;
   } catch (error) {
