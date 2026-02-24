@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import pool from './db.js';
 import adminRouter from './routes/admin.js';
+import usersRouter from './routes/users.js';
 import eventRouter from './routes/events.js';
 import { globalErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
 
@@ -24,6 +25,8 @@ app.get('/', (req, res) => {
       admin: '/admin/onboard',
       events: '/events',
       health: '/health',
+      users: '/users/register, /users/login, /users/:userId',
+      admin: '/admin/onboard',
     },
   });
 });
@@ -47,7 +50,7 @@ app.get('/health', async (req, res) => {
 });
 
 // Routes
-// app.use('/users', usersRouter);
+app.use('/users', usersRouter);
 app.use('/admin', adminRouter);
 app.use('/events', eventRouter);
 

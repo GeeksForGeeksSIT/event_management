@@ -168,3 +168,28 @@ export const validatePositiveInteger = (value, fieldName) => {
   }
   return num;
 };
+/**
+ * Validate username (alphanumeric, 3-20 chars, case insensitive)
+ */
+export const validateUsername = (username) => {
+  if (!username || typeof username !== 'string') {
+    throw createValidationError(ERROR_CODES.MISSING_FIELD, 'Username is required');
+  }
+
+  const trimmedUsername = username.trim().toLowerCase();
+  if (trimmedUsername.length < 3 || trimmedUsername.length > 20) {
+    throw createValidationError(
+      ERROR_CODES.INVALID_USERNAME,
+      'Username must be between 3 and 20 characters'
+    );
+  }
+
+  if (!/^[a-z0-9_.-]+$/.test(trimmedUsername)) {
+    throw createValidationError(
+      ERROR_CODES.INVALID_USERNAME,
+      'Username can only contain letters, numbers, underscores, dots, and hyphens'
+    );
+  }
+
+  return trimmedUsername;
+};

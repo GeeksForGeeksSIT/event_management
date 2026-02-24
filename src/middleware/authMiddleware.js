@@ -7,7 +7,48 @@ import { createUnauthorizedError, createForbiddenError } from '../utils/errors.j
 import { ERROR_CODES } from '../constants/errorCodes.js';
 
 /**
- * Authentication Middleware
+ * Generic Authentication Middleware for Users and Admins
+ * Verifies JWT token from Authorization header and extracts user/admin data
+ * Expects: Authorization: Bearer <token>
+ * Attaches decoded JWT data to req.auth
+ */
+export const authenticateToken = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw createUnauthorizedError(
+        ERROR_CODES.UNAUTHORIZED,
+        'Missing or invalid Authorization header'
+      );
+    }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const decoded = verifyJWT(token);
+
+    // Attach decoded data to request object
+    // Handle both user and admin token structures
+    req.auth = {
+      userID: decoded.UserID || decoded.userID,
+      sub: decoded.UserID || decoded.userID || decoded.adminID || decoded.AdminID,
+      email: decoded.Email || decoded.email,
+      roleID: decoded.RoleID || decoded.roleID || 2, // Default to user role (2) if not specified
+      fullName: decoded.FullName || decoded.fullName,
+      studentID: decoded.StudentID || decoded.studentID,
+    };
+
+    next();
+  } catch (error) {
+    if (error.statusCode) {
+      next(error);
+    } else {
+      next(createUnauthorizedError(ERROR_CODES.UNAUTHORIZED, 'Invalid or expired token'));
+    }
+  }
+};
+
+/**
+ * Authentication Middleware for Admins
  * Verifies JWT token from Authorization header and extracts admin data
  * Expects: Authorization: Bearer <token>
  */

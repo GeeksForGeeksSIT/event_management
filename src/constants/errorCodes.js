@@ -26,6 +26,19 @@ export const ERROR_CODES = {
   INVITATION_CODE_EXPIRED: 'INVITATION_CODE_EXPIRED',
   INVITATION_CODE_ALREADY_USED: 'INVITATION_CODE_ALREADY_USED',
 
+  // User Registration Errors
+  DUPLICATE_USERNAME: 'DUPLICATE_USERNAME',
+  INVALID_USERNAME: 'INVALID_USERNAME',
+  USER_NOT_FOUND: 'USER_NOT_FOUND',
+
+  // Event Registration Errors
+  EVENT_NOT_FOUND: 'EVENT_NOT_FOUND',
+  EVENT_FULL: 'EVENT_FULL',
+  ALREADY_REGISTERED: 'ALREADY_REGISTERED',
+  REGISTRATION_NOT_FOUND: 'REGISTRATION_NOT_FOUND',
+  INVALID_STATUS_TRANSITION: 'INVALID_STATUS_TRANSITION',
+  CANCELLATION_WINDOW_CLOSED: 'CANCELLATION_WINDOW_CLOSED',
+  INVALID_REGISTRATION_STATUS: 'INVALID_REGISTRATION_STATUS',
   // Event Management Errors
   EVENT_NOT_FOUND: 'EVENT_NOT_FOUND',
   VENUE_NOT_FOUND: 'VENUE_NOT_FOUND',
@@ -60,6 +73,21 @@ export const ERROR_MESSAGES = {
   [ERROR_CODES.INVITATION_CODE_INACTIVE]: 'Invitation code is inactive',
   [ERROR_CODES.INVITATION_CODE_EXPIRED]: 'Invitation code has expired',
   [ERROR_CODES.INVITATION_CODE_ALREADY_USED]: 'Invitation code has already been used',
+
+  // User Registration Errors
+  [ERROR_CODES.DUPLICATE_USERNAME]: 'Username already exists',
+  [ERROR_CODES.INVALID_USERNAME]: 'Invalid username format',
+  [ERROR_CODES.USER_NOT_FOUND]: 'User not found',
+
+  // Event Registration Errors
+  [ERROR_CODES.EVENT_NOT_FOUND]: 'Event not found',
+  [ERROR_CODES.EVENT_FULL]: 'Event has reached maximum capacity',
+  [ERROR_CODES.ALREADY_REGISTERED]: 'User is already registered for this event',
+  [ERROR_CODES.REGISTRATION_NOT_FOUND]: 'Registration not found',
+  [ERROR_CODES.INVALID_STATUS_TRANSITION]: 'Invalid registration status transition',
+  [ERROR_CODES.CANCELLATION_WINDOW_CLOSED]: 'Cancellation window has closed for this event',
+  [ERROR_CODES.INVALID_REGISTRATION_STATUS]: 'Invalid registration status value',
+
   [ERROR_CODES.EVENT_NOT_FOUND]: 'Event not found',
   [ERROR_CODES.VENUE_NOT_FOUND]: 'Venue not found',
   [ERROR_CODES.INVALID_MAX_SLOTS]: 'Max slots exceed venue capacity',
