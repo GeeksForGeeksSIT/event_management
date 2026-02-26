@@ -33,6 +33,23 @@ export const createEvent = async (eventData) => {
   try {
     await client.query('BEGIN');
 
+    // Check for duplicate event (API-level validation)
+    const duplicateCheck = `
+      SELECT "EventID", "EventName" 
+      FROM "Event" 
+      WHERE "EventName" = $1 
+        AND "StartTime" = $2 
+        AND "VenueID" = $3
+    `;
+    const duplicateResult = await client.query(duplicateCheck, [eventName, startTime, venueID]);
+
+    if (duplicateResult.rows.length > 0) {
+      throw createConflictError(
+        ERROR_CODES.DUPLICATE_EVENT,
+        `An event with the name "${eventName}" at the same time and venue already exists`
+      );
+    }
+
     // Validate venue exists and has sufficient capacity
     const venueQuery = `SELECT "VenueID", "VenueName", "Capacity" FROM "Venue" WHERE "VenueID" = $1`;
     const venueResult = await client.query(venueQuery, [venueID]);
@@ -100,6 +117,17 @@ export const createEvent = async (eventData) => {
     if (error.statusCode) {
       throw error;
     }
+
+    // Handle database-level constraint violation
+    if (error.code === '23505') { // PostgreSQL unique violation error code
+      if (error.constraint === 'unique_event_name_time_venue') {
+        throw createConflictError(
+          ERROR_CODES.DUPLICATE_EVENT,
+          'An event with the same name, start time, and venue already exists'
+        );
+      }
+    }
+
     throw createServerError(ERROR_CODES.DATABASE_ERROR, `Failed to create event: ${error.message}`);
   } finally {
     client.release();

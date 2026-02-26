@@ -49,6 +49,7 @@ export const ERROR_CODES = {
   EVENT_NOT_PUBLISHED: 'EVENT_NOT_PUBLISHED',
   INCOMPLETE_EVENT: 'INCOMPLETE_EVENT',
   NO_UPDATE_FIELDS: 'NO_UPDATE_FIELDS',
+  DUPLICATE_EVENT: 'DUPLICATE_EVENT',
 
   // Server Errors
   DATABASE_ERROR: 'DATABASE_ERROR',
@@ -97,6 +98,7 @@ export const ERROR_MESSAGES = {
   [ERROR_CODES.EVENT_NOT_PUBLISHED]: 'Event is not published',
   [ERROR_CODES.INCOMPLETE_EVENT]: 'Event details are incomplete',
   [ERROR_CODES.NO_UPDATE_FIELDS]: 'No valid fields provided for update',
+  [ERROR_CODES.DUPLICATE_EVENT]: 'An event with the same name, start time, and venue already exists',
   [ERROR_CODES.DATABASE_ERROR]: 'Database error occurred',
   [ERROR_CODES.TRANSACTION_FAILED]: 'Transaction could not be completed',
   [ERROR_CODES.INTERNAL_ERROR]: 'Internal server error',
