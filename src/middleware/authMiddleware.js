@@ -80,6 +80,14 @@ export const authenticateAdmin = (req, res, next) => {
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
     const decoded = verifyJWT(token);
 
+    // Reject user tokens — admin routes require a token issued for an admin account
+    if (!decoded.adminID) {
+      throw createForbiddenError(
+        ERROR_CODES.FORBIDDEN,
+        'Access denied: admin token required'
+      );
+    }
+
     // Attach admin data to request object
     req.user = {
       AdminID: decoded.adminID,
@@ -95,6 +103,25 @@ export const authenticateAdmin = (req, res, next) => {
       next(createUnauthorizedError(ERROR_CODES.UNAUTHORIZED, 'Invalid or expired token'));
     }
   }
+};
+
+/**
+ * Conditional Authentication Middleware for Event Queries
+ * Requires admin JWT for queries that expose non-public event data:
+ *   - status=Draft (any isPublished value)
+ *   - isPublished=false (any status)
+ * All other queries (e.g. status=Open&isPublished=true) remain public.
+ */
+export const authenticateAdminForRestrictedQuery = (req, res, next) => {
+  const { status, isPublished } = req.query;
+  const isDraft = status === 'Draft';
+  const isUnpublished = isPublished === 'false';
+
+  if (isDraft || isUnpublished) {
+    return authenticateAdmin(req, res, next);
+  }
+
+  next();
 };
 
 /**

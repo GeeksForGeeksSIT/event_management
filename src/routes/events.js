@@ -15,7 +15,7 @@ import {
   getAllVenuesHandler,
   getVenueByIdHandler,
 } from '../controllers/eventController.js';
-import { authenticateAdmin, authorizeEventManagement } from '../middleware/authMiddleware.js';
+import { authenticateAdmin, authorizeEventManagement, authenticateAdminForRestrictedQuery } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -23,8 +23,8 @@ const router = express.Router();
  * Public Event Routes (No authentication required)
  */
 
-// Get all events (with optional filters) - Public access for viewing published events
-router.get('/', getAllEventsHandler);
+// Get all events - public for Open+published, admin required for Draft or unpublished queries
+router.get('/', authenticateAdminForRestrictedQuery, getAllEventsHandler);
 
 // Get single event by ID - Public access for viewing event details
 router.get('/:id', getEventByIdHandler);
