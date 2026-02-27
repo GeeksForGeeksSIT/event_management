@@ -128,6 +128,31 @@ export const authorizeUpdateAdmin = (req, res, next) => {
 };
 
 /**
+ * Authorization Middleware for Event Management
+ * Restricts event management operations to admins with RoleID 1 or 2
+ * RoleID 1 = President
+ * RoleID 2 = Vice-President
+ * Operations: Create, Update, Delete, Publish, Unpublish events
+ */
+export const authorizeEventManagement = (req, res, next) => {
+  try {
+    const currentRoleID = req.user.RoleID;
+
+    // Check if admin has permission (RoleID 1 or 2)
+    if (currentRoleID !== 1 && currentRoleID !== 2) {
+      throw createForbiddenError(
+        ERROR_CODES.FORBIDDEN,
+        'Only President and Vice-President can manage events'
+      );
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Authentication Middleware
  * Verifies JWT token from Authorization header and extracts user data
  * Expects: Authorization: Bearer <token>
