@@ -96,7 +96,7 @@ The server will start on `http://localhost:3000`
 
 ## API Documentation
 
-For detailed API documentation, see [API_DOCUMENTATION.md](ADMIN_API_DOCUMENTATION.md)
+For detailed API documentation, see [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
 
 ---
 
