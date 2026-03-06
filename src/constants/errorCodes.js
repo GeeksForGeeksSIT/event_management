@@ -51,6 +51,16 @@ export const ERROR_CODES = {
   NO_UPDATE_FIELDS: 'NO_UPDATE_FIELDS',
   DUPLICATE_EVENT: 'DUPLICATE_EVENT',
 
+  // Payment Errors
+  PAYMENT_FAILED: 'PAYMENT_FAILED',
+  INVALID_PAYMENT_SIGNATURE: 'INVALID_PAYMENT_SIGNATURE',
+  PAYMENT_VERIFICATION_FAILED: 'PAYMENT_VERIFICATION_FAILED',
+  PAYMENT_NOT_FOUND: 'PAYMENT_NOT_FOUND',
+  RAZORPAY_ERROR: 'RAZORPAY_ERROR',
+
+  // Event Registration Errors (additional)
+  EVENT_NOT_OPEN: 'EVENT_NOT_OPEN',
+
   // Server Errors
   DATABASE_ERROR: 'DATABASE_ERROR',
   TRANSACTION_FAILED: 'TRANSACTION_FAILED',
@@ -102,6 +112,14 @@ export const ERROR_MESSAGES = {
   [ERROR_CODES.DATABASE_ERROR]: 'Database error occurred',
   [ERROR_CODES.TRANSACTION_FAILED]: 'Transaction could not be completed',
   [ERROR_CODES.INTERNAL_ERROR]: 'Internal server error',
+
+  // Payment Errors
+  [ERROR_CODES.PAYMENT_FAILED]: 'Payment processing failed',
+  [ERROR_CODES.INVALID_PAYMENT_SIGNATURE]: 'Payment signature verification failed',
+  [ERROR_CODES.PAYMENT_VERIFICATION_FAILED]: 'Could not verify payment with gateway',
+  [ERROR_CODES.PAYMENT_NOT_FOUND]: 'Payment record not found',
+  [ERROR_CODES.RAZORPAY_ERROR]: 'Razorpay gateway error',
+  [ERROR_CODES.EVENT_NOT_OPEN]: 'Event is not open for registration',
 };
 
 // Password validation rules

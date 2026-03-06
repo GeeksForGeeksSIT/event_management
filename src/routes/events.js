@@ -3,10 +3,10 @@
  * Handles all event-related endpoints for admin management
  */
 import express from 'express';
+import multer from 'multer';
 import {
   createEventHandler,
   getAllEventsHandler,
-  getEventByIdHandler,
   updateEventHandler,
   publishEventHandler,
   unpublishEventHandler,
@@ -14,10 +14,19 @@ import {
   getEventRegistrationsHandler,
   getAllVenuesHandler,
   getVenueByIdHandler,
+  uploadEventQRCodeHandler,
 } from '../controllers/eventController.js';
 import { authenticateAdmin, authorizeEventManagement, authenticateAdminForRestrictedQuery } from '../middleware/authMiddleware.js';
+import { initiateRegistrationHandler } from '../controllers/registrationController.js';
+import { authenticateUser } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },   // 5 MB max
+});
 
 /**
  * Public Event Routes (No authentication required)
@@ -25,9 +34,6 @@ const router = express.Router();
 
 // Get all events - public for Open+published, admin required for Draft or unpublished queries
 router.get('/', authenticateAdminForRestrictedQuery, getAllEventsHandler);
-
-// Get single event by ID - Public access for viewing event details
-router.get('/:id', getEventByIdHandler);
 
 /**
  * Protected Event Management Routes (Admin authentication required)
@@ -62,11 +68,17 @@ router.post('/:id/publish', authenticateAdmin, authorizeEventManagement, publish
 // Unpublish event (President & Vice-President only)
 router.post('/:id/unpublish', authenticateAdmin, authorizeEventManagement, unpublishEventHandler);
 
+// Upload QR code for event (Any admin: roleID 1, 2, or 3)
+router.post('/:id/upload-qrcode', authenticateAdmin, upload.single('qrcode'), uploadEventQRCodeHandler);
+
 /**
  * Protected Event Registration Management Routes (Admin authentication required)
  */
 
 // Get all registrations for an event (Admin only)
 router.get('/:id/registrations', authenticateAdmin, getEventRegistrationsHandler);
+
+// Register authenticated user for an event → creates Pending registration + Razorpay order
+router.post('/:id/register', authenticateUser, initiateRegistrationHandler);
 
 export default router;

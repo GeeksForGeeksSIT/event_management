@@ -6,6 +6,11 @@ import { onboardAdmin, loginAdmin, updateAdmin } from '../services/adminOnboardi
 import { generateJWT, createTokenResponse } from '../utils/jwt.js';
 import { createValidationError } from '../utils/errors.js';
 import { ERROR_CODES } from '../constants/errorCodes.js';
+import {
+  listPendingReviews,
+  approvePayment,
+  rejectPayment,
+} from '../services/paymentService.js';
 
 /**
  * POST /admin/onboard
@@ -159,6 +164,77 @@ export const updateAdminHandler = async (req, res, next) => {
     });
   } catch (error) {
     // Pass error to global error handler
+    next(error);
+  }
+};
+
+// ---------------------------------------------------------------------------
+// GET /admin/payments/review
+// List all payments awaiting screenshot review (PaymentStatus = 'UnderReview')
+// Requires: Admin JWT, RoleID 1 / 2 / 3
+// ---------------------------------------------------------------------------
+export const listPaymentReviewsHandler = async (req, res, next) => {
+  try {
+    const reviews = await listPendingReviews();
+    return res.status(200).json({
+      success: true,
+      message: `${reviews.length} payment(s) pending review`,
+      data: { reviews },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ---------------------------------------------------------------------------
+// PUT /admin/payments/:paymentId/approve
+// Approve screenshot → Payment: Success, Registration: Confirmed
+// Requires: Admin JWT, RoleID 1 / 2 / 3
+// ---------------------------------------------------------------------------
+export const approvePaymentHandler = async (req, res, next) => {
+  try {
+    const { paymentId } = req.params;
+    const id = parseInt(paymentId, 10);
+
+    if (isNaN(id) || id <= 0) {
+      return next(createValidationError(ERROR_CODES.INVALID_INPUT, 'Invalid payment ID'));
+    }
+
+    const result = await approvePayment(id);
+    return res.status(200).json({
+      success: true,
+      message: 'Payment approved. Registration confirmed.',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ---------------------------------------------------------------------------
+// PUT /admin/payments/:paymentId/reject
+// Reject screenshot → Payment: Failed, Registration: Cancelled
+// Body (optional): { "reason": "Screenshot is blurry" }
+// Requires: Admin JWT, RoleID 1 / 2 / 3
+// ---------------------------------------------------------------------------
+export const rejectPaymentHandler = async (req, res, next) => {
+  try {
+    const { paymentId } = req.params;
+    const id = parseInt(paymentId, 10);
+
+    if (isNaN(id) || id <= 0) {
+      return next(createValidationError(ERROR_CODES.INVALID_INPUT, 'Invalid payment ID'));
+    }
+
+    const { reason } = req.body || {};
+    const result = await rejectPayment(id, reason);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payment rejected. Registration cancelled.',
+      data: result,
+    });
+  } catch (error) {
     next(error);
   }
 };

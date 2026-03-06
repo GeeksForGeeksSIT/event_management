@@ -10,6 +10,7 @@ import {
   createServerError,
 } from '../utils/errors.js';
 import { ERROR_CODES } from '../constants/errorCodes.js';
+import { uploadQRCode } from '../utils/supabaseClient.js';
 
 /**
  * Create a new event
@@ -147,7 +148,7 @@ export const getAllEvents = async (filters = {}) => {
         v."VenueName",
         v."Location",
         v."Capacity",
-        COUNT(DISTINCT r."RegID") FILTER (WHERE r."RegStatus" = 'confirmed') as "CurrentRegistrations"
+        COUNT(DISTINCT r."RegID") FILTER (WHERE r."RegStatus" = 'Confirmed') as "CurrentRegistrations"
       FROM "Event" e
       LEFT JOIN "Venue" v ON e."VenueID" = v."VenueID"
       LEFT JOIN "Registration" r ON e."EventID" = r."EventID"
@@ -197,7 +198,7 @@ export const getEventById = async (eventID) => {
         v."VenueName",
         v."Location",
         v."Capacity",
-        COUNT(DISTINCT r."RegID") FILTER (WHERE r."RegStatus" = 'confirmed') as "CurrentRegistrations"
+        COUNT(DISTINCT r."RegID") FILTER (WHERE r."RegStatus" = 'Confirmed') as "CurrentRegistrations"
       FROM "Event" e
       LEFT JOIN "Venue" v ON e."VenueID" = v."VenueID"
       LEFT JOIN "Registration" r ON e."EventID" = r."EventID"
@@ -253,7 +254,7 @@ export const updateEvent = async (eventID, updateData) => {
     // Check if event is published and has registrations
     if (event.IsPublished) {
       const regCheck = await client.query(
-        `SELECT COUNT(*) as count FROM "Registration" WHERE "EventID" = $1 AND "RegStatus" = 'confirmed'`,
+        `SELECT COUNT(*) as count FROM "Registration" WHERE "EventID" = $1 AND "RegStatus" = 'Confirmed'`,
         [eventID]
       );
 
@@ -478,7 +479,7 @@ export const deleteEvent = async (eventID) => {
 
     // Check if event exists
     const eventCheck = await client.query(
-      `SELECT "EventID" FROM "Event" WHERE "EventID" = $1`,
+      `SELECT "EventID", "IsPublished" FROM "Event" WHERE "EventID" = $1`,
       [eventID]
     );
 
@@ -489,9 +490,19 @@ export const deleteEvent = async (eventID) => {
       );
     }
 
+    const event = eventCheck.rows[0];
+
+    // Check if event is published
+    if (event.IsPublished) {
+      throw createConflictError(
+        ERROR_CODES.EVENT_ALREADY_PUBLISHED,
+        'Cannot delete a published event. Please unpublish it first.'
+      );
+    }
+
     // Check for confirmed registrations
     const regCheck = await client.query(
-      `SELECT COUNT(*) as count FROM "Registration" WHERE "EventID" = $1 AND "RegStatus" = 'confirmed'`,
+      `SELECT COUNT(*) as count FROM "Registration" WHERE "EventID" = $1 AND "RegStatus" = 'Confirmed'`,
       [eventID]
     );
 
@@ -595,5 +606,64 @@ export const getVenueById = async (venueID) => {
       throw error;
     }
     throw createServerError(ERROR_CODES.DATABASE_ERROR, 'Failed to fetch venue');
+  }
+};
+
+/**
+ * Upload QR code for an event
+ * @param {number} eventID - Event ID
+ * @param {Buffer} fileBuffer - File buffer from multer
+ * @param {string} mimeType - MIME type of the file
+ * @returns {Promise<Object>} Updated event with QR code URL
+ */
+export const uploadEventQRCode = async (eventID, fileBuffer, mimeType) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // Check if event exists
+    const eventCheck = await client.query(
+      `SELECT "EventID", "EventName" FROM "Event" WHERE "EventID" = $1`,
+      [eventID]
+    );
+
+    if (eventCheck.rows.length === 0) {
+      throw createNotFoundError(
+        ERROR_CODES.EVENT_NOT_FOUND,
+        'Event not found'
+      );
+    }
+
+    const event = eventCheck.rows[0];
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const filename = `qr_event_${eventID}_${timestamp}.png`;
+
+    // Upload QR code to Supabase
+    const qrCodeUrl = await uploadQRCode(fileBuffer, filename, mimeType);
+
+    // Update event with QR code URL
+    const updateQuery = `
+      UPDATE "Event"
+      SET "QRCodeURL" = $1
+      WHERE "EventID" = $2
+      RETURNING *
+    `;
+
+    const result = await client.query(updateQuery, [qrCodeUrl, eventID]);
+
+    await client.query('COMMIT');
+
+    return result.rows[0];
+  } catch (error) {
+    await client.query('ROLLBACK');
+    if (error.statusCode) {
+      throw error;
+    }
+    throw createServerError(ERROR_CODES.DATABASE_ERROR, 'Failed to upload QR code');
+  } finally {
+    client.release();
   }
 };

@@ -180,37 +180,59 @@ export const authorizeEventManagement = (req, res, next) => {
 };
 
 /**
+ * Authorization Middleware for Admin Payment Review
+ * Allows RoleID 1 (President), 2 (Vice-President), 3 (Core Member / Event Manager)
+ * Operations: List, Approve, Reject payment screenshots
+ */
+export const authorizeAdminReview = (req, res, next) => {
+  try {
+    const currentRoleID = req.user.RoleID;
+
+    if (currentRoleID !== 1 && currentRoleID !== 2 && currentRoleID !== 3) {
+      throw createForbiddenError(
+        ERROR_CODES.FORBIDDEN,
+        'Only President, Vice-President, or Core Members can review payments'
+      );
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Authentication Middleware
  * Verifies JWT token from Authorization header and extracts user data
  * Expects: Authorization: Bearer <token>
  */
 
-export const authenticateUser = (req,res,next)=>{
-    try{
-        const authHeader= req.header.authorization;
+export const authenticateUser = (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
 
-        if(!authHeader || !authHeader.startsWith('Bearer ')){
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
             throw createUnauthorizedError(
                 ERROR_CODES.UNAUTHORIZED,
                 'Missing or invalid Authorization header'
-        );
+            );
         }
 
         const token = authHeader.substring(7); // Remove 'Bearer ' prefix
         const decoded = verifyJWT(token);
 
-        req.user={
-            userId: decoded.userId,
-            userName: decoded.name,
-            userEmail: decode.email
-        }
+        req.user = {
+            userId: decoded.userID || decoded.UserID || decoded.userId,
+            userName: decoded.name || decoded.fullName,
+            userEmail: decoded.email,
+        };
+
         next();
-    }
-    catch{
+    } catch (error) {
         if (error.statusCode) {
-        next(error);
+            next(error);
         } else {
             next(createUnauthorizedError(ERROR_CODES.UNAUTHORIZED, 'Invalid or expired token'));
         }
     }
-} 
+};

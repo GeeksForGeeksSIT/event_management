@@ -5,7 +5,6 @@
 import {
   createEvent,
   getAllEvents,
-  getEventById,
   updateEvent,
   publishEvent,
   unpublishEvent,
@@ -13,6 +12,7 @@ import {
   getEventRegistrations,
   getAllVenues,
   getVenueById,
+  uploadEventQRCode,
 } from '../services/eventService.js';
 
 /**
@@ -69,24 +69,6 @@ export const getAllEventsHandler = async (req, res, next) => {
       success: true,
       count: events.length,
       data: events,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * GET /events/:id
- * Get single event by ID with details
- */
-export const getEventByIdHandler = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const event = await getEventById(parseInt(id));
-
-    res.status(200).json({
-      success: true,
-      data: event,
     });
   } catch (error) {
     next(error);
@@ -229,6 +211,53 @@ export const getVenueByIdHandler = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: venue,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /events/:id/upload-qrcode
+ * Upload QR code for an event
+ */
+export const uploadEventQRCodeHandler = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Validate file upload
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_FILE',
+          message: 'QR code image file is required',
+        },
+      });
+    }
+
+    // Validate file type (image only)
+    const allowedMimeTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!allowedMimeTypes.includes(req.file.mimetype)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_FILE_TYPE',
+          message: 'Only PNG, JPEG, or WebP images are allowed',
+        },
+      });
+    }
+
+    const event = await uploadEventQRCode(
+      parseInt(id),
+      req.file.buffer,
+      req.file.mimetype
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'QR code uploaded successfully',
+      data: event,
     });
   } catch (error) {
     next(error);

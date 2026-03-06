@@ -4,6 +4,7 @@ import pool from './db.js';
 import adminRouter from './routes/admin.js';
 import usersRouter from './routes/users.js';
 import eventRouter from './routes/events.js';
+import paymentsRouter from './routes/registration.js';
 import { globalErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -53,6 +54,7 @@ app.get('/health', async (req, res) => {
 app.use('/users', usersRouter);
 app.use('/admin', adminRouter);
 app.use('/events', eventRouter);
+app.use('/payments', paymentsRouter);
 
 // 404 Handler
 app.use(notFoundHandler);

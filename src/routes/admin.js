@@ -3,9 +3,16 @@
  * Handles all admin-related endpoints
  */
 import express from 'express';
-import { onboardAdminHandler, loginAdminHandler, updateAdminHandler } from '../controllers/adminController.js';
+import {
+  onboardAdminHandler,
+  loginAdminHandler,
+  updateAdminHandler,
+  listPaymentReviewsHandler,
+  approvePaymentHandler,
+  rejectPaymentHandler,
+} from '../controllers/adminController.js';
 import { sanitizeAdminInput, validateAdminOnboardingInput, validateAdminLoginInput, validateAdminUpdateInput } from '../middleware/validateAdmin.js';
-import { authenticateAdmin, authorizeUpdateAdmin } from '../middleware/authMiddleware.js';
+import { authenticateAdmin, authorizeUpdateAdmin, authorizeAdminReview } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -60,5 +67,18 @@ router.post('/login', sanitizeAdminInput, validateAdminLoginInput, loginAdminHan
  * }
  */
 router.put('/:adminId', sanitizeAdminInput, authenticateAdmin, authorizeUpdateAdmin, validateAdminUpdateInput, updateAdminHandler);
+
+/**
+ * Payment Review Routes (Admin only — RoleID 1, 2, 3)
+ */
+
+// GET /admin/payments/review  — list all UnderReview payments
+router.get('/payments/review', authenticateAdmin, authorizeAdminReview, listPaymentReviewsHandler);
+
+// PUT /admin/payments/:paymentId/approve  — approve payment screenshot
+router.put('/payments/:paymentId/approve', authenticateAdmin, authorizeAdminReview, approvePaymentHandler);
+
+// PUT /admin/payments/:paymentId/reject   — reject payment screenshot
+router.put('/payments/:paymentId/reject', authenticateAdmin, authorizeAdminReview, rejectPaymentHandler);
 
 export default router;
