@@ -182,14 +182,7 @@ Returns a welcome message and available endpoint summary.
 {
   "message": "Welcome to GFG Event Management API",
   "status": "Server is running",
-  "version": "1.0.0",
-  "endpoints": {
-    "root": "/",
-    "events": "/events",
-    "health": "/health",
-    "users": "/users/register, /users/login, /users/:userId",
-    "admin": "/admin/onboard"
-  }
+  "version": "1.0.0"
 }
 ```
 

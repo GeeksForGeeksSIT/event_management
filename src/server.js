@@ -18,17 +18,9 @@ app.use(express.json());
 // Root route
 app.get('/', (req, res) => {
   res.json({
-    message: 'Welcome to GFG Event Management API',
+    message: 'Welcome to GFG Event Management backend',
     status: 'Server is running',
-    version: '1.0.0',
-    endpoints: {
-      root: '/',
-      admin: '/admin/onboard',
-      events: '/events',
-      health: '/health',
-      users: '/users/register, /users/login, /users/:userId',
-      admin: '/admin/onboard',
-    },
+    version: '1.0.0'
   });
 });
 
